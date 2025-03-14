@@ -483,7 +483,7 @@ const SolarSystemSimulation = () => {
               diameter: "6,792 km",
               orbitalPeriod: "687 Earth days",
               temperature: "−125°C to 20°C",
-              description: "Mars, known as the "Red Planet," gets its color from iron oxide (rust) in its soil. Its landscape features huge volcanoes, deep canyons, and polar ice caps composed of frozen water and carbon dioxide. Mars is actively explored by robotic spacecraft in search of past or present signs of life, and is a prime candidate for future human colonization."
+              description: "Mars, known as the \"Red Planet,\" gets its color from iron oxide (rust) in its soil. Its landscape features huge volcanoes, deep canyons, and polar ice caps composed of frozen water and carbon dioxide. Mars is actively explored by robotic spacecraft in search of past or present signs of life, and is a prime candidate for future human colonization."
             },
             {
               name: "Jupiter",
