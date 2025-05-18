@@ -1,4 +1,6 @@
-const tests = require('./keyboardProcessor.test.js');
+const keyboardTests = require('./keyboardProcessor.test.js');
+const orbitTests = require('./orbitUtils.test.js');
+const tests = [...keyboardTests, ...orbitTests];
 
 let failures = 0;
 for (const test of tests) {
