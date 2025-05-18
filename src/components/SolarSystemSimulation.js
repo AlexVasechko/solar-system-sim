@@ -65,6 +65,8 @@ const SolarSystemSimulation = () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000);
     renderer.setPixelRatio(window.devicePixelRatio > 1 ? 2 : 1);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     const containerElement = containerRef.current;
     containerElement.appendChild(renderer.domElement);
@@ -91,10 +93,14 @@ const SolarSystemSimulation = () => {
     scene.add(ambientLight);
 
     const sunLight = new THREE.PointLight(0xffffff, 5, 300);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 1024;
+    sunLight.shadow.mapSize.height = 1024;
     scene.add(sunLight);
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
     directionalLight.position.set(1, 2, 1).normalize();
+    directionalLight.castShadow = true;
     scene.add(directionalLight);
 
     const createHighlightEffect = () => {
@@ -114,20 +120,20 @@ const SolarSystemSimulation = () => {
 
     highlightEffectRef.current = createHighlightEffect();
 
-    const starsGeometry = new THREE.BufferGeometry();
-    const starsMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.1 });
-    const starsVertices = [];
-    for (let i = 0; i < 10000; i++) {
-      const x = (Math.random() - 0.5) * 2000;
-      const y = (Math.random() - 0.5) * 2000;
-      const z = (Math.random() - 0.5) * 2000;
-      starsVertices.push(x, y, z);
+    const starGeometry = new THREE.SphereGeometry(0.1, 4, 4);
+    const starMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const starCount = 2000;
+    const stars = new THREE.InstancedMesh(starGeometry, starMaterial, starCount);
+    const dummy = new THREE.Object3D();
+    for (let i = 0; i < starCount; i++) {
+      dummy.position.set(
+        (Math.random() - 0.5) * 2000,
+        (Math.random() - 0.5) * 2000,
+        (Math.random() - 0.5) * 2000
+      );
+      dummy.updateMatrix();
+      stars.setMatrixAt(i, dummy.matrix);
     }
-    starsGeometry.setAttribute(
-      'position',
-      new THREE.Float32BufferAttribute(starsVertices, 3)
-    );
-    const stars = new THREE.Points(starsGeometry, starsMaterial);
     scene.add(stars);
 
     const celestialBodies = [];
@@ -142,14 +148,14 @@ const SolarSystemSimulation = () => {
     scene.add(sun);
 
     const planetsData = [
-      [0.5,  3,  0.015, 0xdddddd],
-      [0.9,  6,  0.010, 0xffee55],
-      [1.0,  8,  0.008, 0x0088ff],
-      [0.8, 12,  0.006, 0xff2200],
-      [3.0, 18,  0.004, 0xffaa00],
-      [2.5, 24,  0.0032, 0xffee00],
-      [2.0, 30,  0.0025, 0x00ffff],
-      [1.8, 36,  0.002,  0x0044ff]
+      { size: 0.5,  distance: 3,  speed: 0.015, color: 0xdddddd, eccentricity: 0.2056, tilt: 0.034 },
+      { size: 0.9,  distance: 6,  speed: 0.010, color: 0xffee55, eccentricity: 0.0067, tilt: 177.4 },
+      { size: 1.0,  distance: 8,  speed: 0.008, color: 0x0088ff, eccentricity: 0.0167, tilt: 23.4 },
+      { size: 0.8,  distance: 12, speed: 0.006, color: 0xff2200, eccentricity: 0.0934, tilt: 25.2 },
+      { size: 3.0,  distance: 18, speed: 0.004, color: 0xffaa00, eccentricity: 0.0489, tilt: 3.1 },
+      { size: 2.5,  distance: 24, speed: 0.0032, color: 0xffee00, eccentricity: 0.0565, tilt: 26.7 },
+      { size: 2.0,  distance: 30, speed: 0.0025, color: 0x00ffff, eccentricity: 0.0472, tilt: 97.8 },
+      { size: 1.8,  distance: 36, speed: 0.002,  color: 0x0044ff, eccentricity: 0.0086, tilt: 28.3 }
     ];
     
     const moonsData = [
@@ -174,10 +180,13 @@ const SolarSystemSimulation = () => {
 
     const planets = [];
     for (let i = 0; i < planetsData.length; i++) {
-      const [size, distance, speed, color] = planetsData[i];
+      const { size, distance, speed, color, eccentricity, tilt } = planetsData[i];
       const planetGeometry = new THREE.SphereGeometry(size, 32, 32);
-      const planetMaterial = new THREE.MeshLambertMaterial({ color });
+      const planetMaterial = new THREE.MeshStandardMaterial({ color });
       const planet = new THREE.Mesh(planetGeometry, planetMaterial);
+      planet.castShadow = true;
+      planet.receiveShadow = true;
+      planet.rotation.z = THREE.MathUtils.degToRad(tilt);
       scene.add(planet);
 
       const orbitGeometry = new THREE.RingGeometry(distance - 0.05, distance + 0.05, 128);
@@ -234,6 +243,7 @@ const SolarSystemSimulation = () => {
         distance,
         angle: initialAngle,
         speed,
+        eccentricity,
         index: i
       });
     }
@@ -242,8 +252,10 @@ const SolarSystemSimulation = () => {
       const parentPlanet = planets[planetIndex];
 
       const moonGeometry = new THREE.SphereGeometry(size, 16, 16);
-      const moonMaterial = new THREE.MeshLambertMaterial({ color });
+      const moonMaterial = new THREE.MeshStandardMaterial({ color });
       const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+      moon.castShadow = true;
+      moon.receiveShadow = true;
       scene.add(moon);
 
       const moonOrbitGeometry = new THREE.RingGeometry(distance - 0.02, distance + 0.02, 64);
@@ -1150,8 +1162,11 @@ const SolarSystemSimulation = () => {
         celestialBodies.forEach((body, index) => {
           body.angle += body.speed * currentTimeScale;
           if (body.type === 'planet') {
-            body.object.position.x = Math.cos(body.angle) * body.distance;
-            body.object.position.z = Math.sin(body.angle) * body.distance;
+            const a = body.distance;
+            const e = body.eccentricity || 0;
+            const r = (a * (1 - e * e)) / (1 + e * Math.cos(body.angle));
+            body.object.position.x = Math.cos(body.angle) * r;
+            body.object.position.z = Math.sin(body.angle) * r;
             body.object.rotation.y += body.speed * 10 * currentTimeScale;
           } else if (body.type === 'moon') {
             const parentPos = body.parentObject.position;
