@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
+import processKey from '../utils/keyboardProcessor';
 
 const SolarSystemSimulation = () => {
   const containerRef = useRef(null);
@@ -863,47 +864,6 @@ const SolarSystemSimulation = () => {
     window.addEventListener('touchmove', handleTouchZoomMove, { passive: false });
     window.addEventListener('touchend', handleTouchEnd);
 
-    const toggleDebugMode = (e) => {
-      if (e.key === 'd' || e.key === 'D') {
-        debugModeRef.current = !debugModeRef.current;
-        debugObjectsRef.current.forEach((obj) => scene.remove(obj));
-        debugObjectsRef.current = [];
-        if (debugModeRef.current) {
-          console.log('Debug mode ON');
-        } else {
-          const debugInfo = document.getElementById('debug-info');
-          if (debugInfo) debugInfo.remove();
-          console.log('Debug mode OFF');
-        }
-      } else if (e.key === 'p' || e.key === 'P') {
-        showPerformanceRef.current = !showPerformanceRef.current;
-        let perfDisplay = document.getElementById('performance-stats');
-        if (showPerformanceRef.current) {
-          if (!perfDisplay) {
-            perfDisplay = document.createElement('div');
-            perfDisplay.id = 'performance-stats';
-            perfDisplay.style.position = 'absolute';
-            perfDisplay.style.top = '10px';
-            perfDisplay.style.right = '10px';
-            perfDisplay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-            perfDisplay.style.color = '#0f0';
-            perfDisplay.style.padding = '5px 10px';
-            perfDisplay.style.borderRadius = '4px';
-            perfDisplay.style.fontFamily = 'monospace';
-            perfDisplay.style.zIndex = '1000';
-            perfDisplay.textContent = 'FPS: --';
-            containerElement.appendChild(perfDisplay);
-          } else {
-            perfDisplay.style.display = 'block';
-          }
-          console.log('Performance monitoring ON');
-        } else if (perfDisplay) {
-          perfDisplay.style.display = 'none';
-          console.log('Performance monitoring OFF');
-        }
-      }
-    };
-    window.addEventListener('keydown', toggleDebugMode);
 
     const resetButton = document.createElement('button');
     resetButton.textContent = 'Reset Camera';
@@ -999,21 +959,39 @@ const SolarSystemSimulation = () => {
     containerElement.appendChild(timeControls);
 
     const handleKeyboardControls = (e) => {
-      if (e.key === 'd' || e.key === 'D') {
-        debugModeRef.current = !debugModeRef.current;
+      const prevState = {
+        debugMode: debugModeRef.current,
+        showPerformance: showPerformanceRef.current,
+        timeScale: timeScaleRef.current,
+        savedSpeed: savedSpeedRef.current,
+      };
+
+      const newState = processKey(prevState, { key: e.key, code: e.code });
+
+      const debugChanged = newState.debugMode !== prevState.debugMode;
+      const perfChanged = newState.showPerformance !== prevState.showPerformance;
+      const speedChanged = newState.timeScale !== prevState.timeScale;
+
+      debugModeRef.current = newState.debugMode;
+      showPerformanceRef.current = newState.showPerformance;
+      savedSpeedRef.current = newState.savedSpeed;
+      timeScaleRef.current = newState.timeScale;
+
+      if (debugChanged) {
         debugObjectsRef.current.forEach((obj) => scene.remove(obj));
         debugObjectsRef.current = [];
-        if (debugModeRef.current) {
+        if (newState.debugMode) {
           console.log('Debug mode ON');
         } else {
           const debugInfo = document.getElementById('debug-info');
           if (debugInfo) debugInfo.remove();
           console.log('Debug mode OFF');
         }
-      } else if (e.key === 'p' || e.key === 'P') {
-        showPerformanceRef.current = !showPerformanceRef.current;
+      }
+
+      if (perfChanged) {
         let perfDisplay = document.getElementById('performance-stats');
-        if (showPerformanceRef.current) {
+        if (newState.showPerformance) {
           if (!perfDisplay) {
             perfDisplay = document.createElement('div');
             perfDisplay.id = 'performance-stats';
@@ -1036,82 +1014,19 @@ const SolarSystemSimulation = () => {
           perfDisplay.style.display = 'none';
           console.log('Performance monitoring OFF');
         }
-      } 
-      else if (e.key === ' ' || e.code === 'Space') {
-        e.preventDefault();
-        
-        if (timeScaleRef.current !== 0) {
-          savedSpeedRef.current = timeScaleRef.current;
-          timeScaleRef.current = 0;
-          setTimeScale(0);
-          
-          const buttons = document.querySelectorAll('.time-scale-controls button');
-          buttons.forEach(btn => {
-            const speed = parseFloat(btn.dataset.speed);
-            btn.style.backgroundColor = speed === 0 ? '#4CAF50' : '#555';
-          });
-        } else {
-          timeScaleRef.current = savedSpeedRef.current;
-          setTimeScale(savedSpeedRef.current);
-          
-          const buttons = document.querySelectorAll('.time-scale-controls button');
-          buttons.forEach(btn => {
-            const speed = parseFloat(btn.dataset.speed);
-            btn.style.backgroundColor = speed === savedSpeedRef.current ? '#4CAF50' : '#555';
-          });
-        }
       }
-      else if (e.key === '+' || e.key === '=' || e.key === 'Add') {
+
+      if (e.key === ' ' || e.code === 'Space' || e.key === '+' || e.key === '=' || e.key === 'Add' || e.key === '-' || e.key === '_' || e.key === 'Subtract') {
         e.preventDefault();
-        const speeds = [0, 0.25, 0.5, 1, 2, 4, 8];
-        
-        let currentIndex = speeds.indexOf(timeScaleRef.current);
-        if (currentIndex < 0) {
-          for (let i = 0; i < speeds.length; i++) {
-            if (speeds[i] > timeScaleRef.current) {
-              currentIndex = i - 1;
-              break;
-            }
-          }
-        }
-        
-        if (currentIndex < speeds.length - 1) {
-          const newSpeed = speeds[currentIndex + 1];
-          timeScaleRef.current = newSpeed;
-          setTimeScale(newSpeed);
-          
-          const buttons = document.querySelectorAll('.time-scale-controls button');
-          buttons.forEach(btn => {
-            const speed = parseFloat(btn.dataset.speed);
-            btn.style.backgroundColor = speed === newSpeed ? '#4CAF50' : '#555';
-          });
-        }
       }
-      else if (e.key === '-' || e.key === '_' || e.key === 'Subtract') {
-        e.preventDefault();
-        const speeds = [0, 0.25, 0.5, 1, 2, 4, 8];
-        
-        let currentIndex = speeds.indexOf(timeScaleRef.current);
-        if (currentIndex < 0) {
-          for (let i = speeds.length - 1; i >= 0; i--) {
-            if (speeds[i] < timeScaleRef.current) {
-              currentIndex = i + 1;
-              break;
-            }
-          }
-        }
-        
-        if (currentIndex > 0) {
-          const newSpeed = speeds[currentIndex - 1];
-          timeScaleRef.current = newSpeed;
-          setTimeScale(newSpeed);
-          
-          const buttons = document.querySelectorAll('.time-scale-controls button');
-          buttons.forEach(btn => {
-            const speed = parseFloat(btn.dataset.speed);
-            btn.style.backgroundColor = speed === newSpeed ? '#4CAF50' : '#555';
-          });
-        }
+
+      if (speedChanged) {
+        setTimeScale(newState.timeScale);
+        const buttons = document.querySelectorAll('.time-scale-controls button');
+        buttons.forEach((btn) => {
+          const speed = parseFloat(btn.dataset.speed);
+          btn.style.backgroundColor = speed === newState.timeScale ? '#4CAF50' : '#555';
+        });
       }
     };
     
@@ -1236,7 +1151,6 @@ const SolarSystemSimulation = () => {
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchmove', handleTouchZoomMove);
       window.removeEventListener('touchend', handleTouchEnd);
-      window.removeEventListener('keydown', toggleDebugMode);
       window.removeEventListener('keydown', handleKeyboardControls);
 
       debugObjectsRef.current.forEach((obj) => scene.remove(obj));
