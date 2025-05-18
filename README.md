@@ -4,7 +4,7 @@ An interactive 3D simulation of our solar system built with React and Three.js.
 
 ## Features
 
-- Realistic orbital mechanics for planets and moons
+- Elliptical orbital mechanics with axis tilt for planets
 - Interactive camera controls
   - Left-click and drag to rotate the view
   - Right-click and drag (or Shift+left-click) to pan
@@ -13,7 +13,8 @@ An interactive 3D simulation of our solar system built with React and Three.js.
 - Adjustable simulation speed
 - Detailed planet and moon system with correct relative sizing and colors
 - Saturn's rings visualization
-- Star field background
+- Star field background rendered with instanced meshes
+- Shadow casting from lights for deeper realism
 
 ## Interactive Controls
 
