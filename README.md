@@ -78,6 +78,33 @@ The application will open in your default web browser at `http://localhost:3000`
 - Three.js - 3D graphics library
 - JavaScript ES6+ - Core programming language
 
+## Deploying to GitHub Pages
+
+1. In `package.json`, add a `homepage` field that points to your GitHub Pages URL. Replace `<YOUR_GITHUB_USERNAME>` with your GitHub username:
+
+```json
+"homepage": "https://<YOUR_GITHUB_USERNAME>.github.io/solar-system-sim"
+```
+
+2. Install the `gh-pages` package:
+
+```bash
+npm install --save gh-pages
+```
+
+3. Add deployment scripts to `package.json`:
+
+```json
+"predeploy": "npm run build",
+"deploy": "gh-pages -d build"
+```
+
+4. Run the deploy script to publish the site:
+
+```bash
+npm run deploy
+```
+
 ## License
 
 This project is open source and available under the MIT License. 
