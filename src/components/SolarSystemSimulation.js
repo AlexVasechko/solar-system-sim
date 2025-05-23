@@ -1,74 +1,111 @@
-import React, { useRef, useState } from 'react';
-import * as THREE from 'three';
+import React, { useRef, useEffect, useReducer, useCallback } from 'react';
 import useSolarSystem from '../hooks/useSolarSystem';
+import CelestialBodyInfoPanel from './CelestialBodyInfoPanel';
+import ResetCameraButton from './ResetCameraButton';
+import TimeScaleControls from './TimeScaleControls';
+import InstructionsOverlay from './InstructionsOverlay';
+import '../SolarSystemSimulation.css'; 
+import * as THREE from 'three'; // For Vector3 in initial camera state
 
-// Main component rendering the simulation container and overlay instructions.
+// Action Types
+export const ACTION_TYPES = {
+  SET_TIME_SCALE: 'SET_TIME_SCALE',
+  SET_SELECTED_BODY: 'SET_SELECTED_BODY',
+  TOGGLE_DEBUG_MODE: 'TOGGLE_DEBUG_MODE',
+  TOGGLE_SHOW_PERFORMANCE: 'TOGGLE_SHOW_PERFORMANCE',
+  SET_SAVED_SPEED: 'SET_SAVED_SPEED',
+};
+
+// Initial State
+const initialState = {
+  timeScale: 1,
+  selectedBody: null,
+  debugMode: false,
+  showPerformance: false,
+  savedSpeed: 1, 
+};
+
+// Reducer Function
+function reducer(state, action) {
+  switch (action.type) {
+    case ACTION_TYPES.SET_TIME_SCALE:
+      return { ...state, timeScale: action.payload };
+    case ACTION_TYPES.SET_SELECTED_BODY:
+      return { ...state, selectedBody: action.payload };
+    case ACTION_TYPES.TOGGLE_DEBUG_MODE:
+      return { ...state, debugMode: !state.debugMode };
+    case ACTION_TYPES.TOGGLE_SHOW_PERFORMANCE:
+      return { ...state, showPerformance: !state.showPerformance };
+    case ACTION_TYPES.SET_SAVED_SPEED:
+      return { ...state, savedSpeed: action.payload };
+    default:
+      throw new Error(`Unhandled action type: ${action.type}`);
+  }
+}
+
 const SolarSystemSimulation = () => {
+  const [simulationState, dispatch] = useReducer(reducer, initialState);
+  
   const containerRef = useRef(null);
-  const [timeScale, setTimeScale] = useState(1);
-  const timeScaleRef = useRef(1);
+  
+  // Refs that will be synchronized with simulationState
+  const timeScaleRef = useRef(simulationState.timeScale);
+  const selectedBodyRef = useRef(simulationState.selectedBody);
+  const debugModeRef = useRef(simulationState.debugMode);
+  const showPerformanceRef = useRef(simulationState.showPerformance);
+  const savedSpeedRef = useRef(simulationState.savedSpeed);
 
-  const [selectedBody, setSelectedBody] = useState(null);
-  const selectedBodyRef = useRef(null);
-
-  const celestialBodiesRef = useRef([]);
+  // Ref for camera position, managed by useCameraControls via useSolarSystem
   const cameraPositionRef = useRef({
     rotateX: Math.PI / 2,
     rotateY: 0,
     cameraDistance: 70,
     panOffset: new THREE.Vector3(0, 0, 0),
   });
+  
+  const celestialBodiesRef = useRef([]); 
+  const highlightEffectRef = useRef(null); 
+  const debugObjectsRef = useRef([]); 
 
-  const debugModeRef = useRef(false);
-  const debugObjectsRef = useRef([]);
-  const showPerformanceRef = useRef(false);
-  const animationFrameRef = useRef(null);
-  const highlightEffectRef = useRef(null);
-  const savedSpeedRef = useRef(1);
+  // Synchronize refs with state changes from reducer
+  useEffect(() => { timeScaleRef.current = simulationState.timeScale; }, [simulationState.timeScale]);
+  useEffect(() => { selectedBodyRef.current = simulationState.selectedBody; }, [simulationState.selectedBody]);
+  useEffect(() => { debugModeRef.current = simulationState.debugMode; }, [simulationState.debugMode]);
+  useEffect(() => { showPerformanceRef.current = simulationState.showPerformance; }, [simulationState.showPerformance]);
+  useEffect(() => { savedSpeedRef.current = simulationState.savedSpeed; }, [simulationState.savedSpeed]);
 
-  // Initialize the solar system simulation logic.
-  useSolarSystem(
+  // useSolarSystem now returns the reset function for the camera.
+  const { resetCameraApp } = useSolarSystem(
     containerRef,
-    timeScale,
-    timeScaleRef,
+    simulationState.timeScale, 
+    timeScaleRef,        
     savedSpeedRef,
-    setTimeScale,
     selectedBodyRef,
-    setSelectedBody,
+    dispatch, // Pass the main dispatch function
     celestialBodiesRef,
     cameraPositionRef,
     debugModeRef,
     debugObjectsRef,
     showPerformanceRef,
-    animationFrameRef,
     highlightEffectRef
+    // resetCameraCallback prop is removed as useSolarSystem now returns the reset function.
   );
+  
+  const handleResetButtonClick = () => {
+    if (resetCameraApp) {
+      resetCameraApp();
+    }
+  };
 
   return (
-    <div className="w-full h-screen" ref={containerRef}>
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          margin: '4px',
-          padding: '4px 6px',
-          fontSize: '12px',
-          backgroundColor: 'rgba(0,0,0,0.4)',
-          color: 'white',
-          borderRadius: '3px',
-          pointerEvents: 'none',
-        }}
-      >
-        <div style={{ fontWeight: 'bold', fontSize: '14px' }}>
-          Solar System Simulation
-        </div>
-        <div>• Left-click to select bodies</div>
-        <div>• Right-click to pan</div>
-        <div>• Wheel to zoom</div>
-        <div>• Press 'D' debug / 'P' perf</div>
-        <div>• Space to pause / +- to change speed</div>
-      </div>
+    <div ref={containerRef} className="solar-system-container" style={{ position: 'relative' }}>
+      <InstructionsOverlay />
+      <CelestialBodyInfoPanel selectedBody={simulationState.selectedBody} />
+      <ResetCameraButton onClick={handleResetButtonClick} /> 
+      <TimeScaleControls 
+        timeScale={simulationState.timeScale} 
+        onTimeScaleChange={(speed) => dispatch({ type: ACTION_TYPES.SET_TIME_SCALE, payload: speed })} 
+      />
     </div>
   );
 };
