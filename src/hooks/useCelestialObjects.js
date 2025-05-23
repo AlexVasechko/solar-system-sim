@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import *_THREE from 'three'; // Using *_THREE to avoid conflicts if a global THREE is present
 // Ensure THREE is correctly imported and used. If using a module system:
 import * as THREE from 'three';
 import { calculateOrbitPosition } from '../utils/orbitUtils'; // Assuming this path is correct

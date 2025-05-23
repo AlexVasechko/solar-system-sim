@@ -4,7 +4,7 @@ import CelestialBodyInfoPanel from './CelestialBodyInfoPanel';
 import ResetCameraButton from './ResetCameraButton';
 import TimeScaleControls from './TimeScaleControls';
 import InstructionsOverlay from './InstructionsOverlay';
-import '../SolarSystemSimulation.css'; 
+// import '../SolarSystemSimulation.css'; 
 import * as THREE from 'three'; // For Vector3 in initial camera state
 
 // Action Types
