@@ -39,10 +39,16 @@ export default function useAnimationLoop(
   const updateOrbitLabelVisibility = useCallback(() => {
     if (!cameraPositionRef?.current || !orbitLabels) return;
     const currentCameraDistance = cameraPositionRef.current.cameraDistance;
+    const scaleFactor = currentCameraDistance / 70; // maintain roughly constant on-screen size
     orbitLabels.forEach((label) => {
       if (!label.sprite) return;
       const isInZoomRange = currentCameraDistance >= label.minZoom && currentCameraDistance <= label.maxZoom;
       label.sprite.visible = isInZoomRange;
+      if (label.baseScale) {
+        const x = label.baseScale.x * scaleFactor;
+        const y = label.baseScale.y * scaleFactor;
+        label.sprite.scale.set(x, y, 1);
+      }
       if (label.type === 'moon') {
         if (label.orbitContainer) label.orbitContainer.visible = isInZoomRange;
         if (label.parentPlanet && label.orbitContainer) label.orbitContainer.position.copy(label.parentPlanet.position);

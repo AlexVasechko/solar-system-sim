@@ -77,7 +77,13 @@ export default function useCelestialObjects(scene, planetsData, moonsData, celes
       sprite.scale.set(10, 2.5, 1);
       sprite.position.set(distance, 0.1, 0); // Initial position, will be updated
       scene.add(sprite);
-      localOrbitLabels.push({ sprite, type: 'planet', minZoom: 40, maxZoom: 200 });
+      localOrbitLabels.push({
+        sprite,
+        type: 'planet',
+        minZoom: 40,
+        maxZoom: 200,
+        baseScale: { x: 10, y: 2.5 }
+      });
 
       const initialAngle = celestialBodiesRef.current[i]?.angle || Math.random() * Math.PI * 2;
       const planetSimData = {
@@ -171,7 +177,8 @@ export default function useCelestialObjects(scene, planetsData, moonsData, celes
         parentPlanet: parentPlanetObject,
         orbitContainer: moonOrbitContainer, // For positioning relative to parent
         minZoom: 5,
-        maxZoom: 30,
+        maxZoom: 120,
+        baseScale: { x: 2, y: 0.5 },
       });
       
       const moonGlobalIndex = planetsData.length + moonIdx;
