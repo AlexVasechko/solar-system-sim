@@ -64,6 +64,10 @@ Start the development server:
 npm start
 ```
 
+If the command fails with `react-scripts: not found`, ensure that you have run
+`npm install` (or `yarn install`) beforehand to download the project
+dependencies.
+
 Or with yarn:
 
 ```bash
