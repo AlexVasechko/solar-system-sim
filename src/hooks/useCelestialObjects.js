@@ -79,6 +79,7 @@ export default function useCelestialObjects(scene, planetsData, moonsData, celes
       localOrbitLabels.push({
         sprite,
         type: 'planet',
+        targetObject: planet,
         minZoom: 40,
         maxZoom: 200,
         baseScale: { x: 10, y: 2.5 }
@@ -173,6 +174,7 @@ export default function useCelestialObjects(scene, planetsData, moonsData, celes
         sprite: moonSprite,
         container: moonSpriteContainer, // For positioning relative to parent
         type: 'moon',
+        targetObject: moon,
         parentPlanet: parentPlanetObject,
         orbitContainer: moonOrbitContainer, // For positioning relative to parent
         minZoom: 5,

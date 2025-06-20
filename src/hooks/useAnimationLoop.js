@@ -41,7 +41,7 @@ export default function useAnimationLoop(
     const currentCameraDistance = cameraPositionRef.current.cameraDistance;
     const scaleFactor = currentCameraDistance / 70; // maintain roughly constant on-screen size
     orbitLabels.forEach((label) => {
-      if (!label.sprite) return;
+      if (!label.sprite || !label.targetObject) return;
       const isInZoomRange = currentCameraDistance >= label.minZoom && currentCameraDistance <= label.maxZoom;
       label.sprite.visible = isInZoomRange;
       if (label.baseScale) {
@@ -49,10 +49,11 @@ export default function useAnimationLoop(
         const y = label.baseScale.y * scaleFactor;
         label.sprite.scale.set(x, y, 1);
       }
+      label.sprite.position.copy(label.targetObject.position);
       if (label.type === 'moon') {
         if (label.orbitContainer) label.orbitContainer.visible = isInZoomRange;
         if (label.parentPlanet && label.orbitContainer) label.orbitContainer.position.copy(label.parentPlanet.position);
-        if (label.parentPlanet && label.container) label.container.position.copy(label.parentPlanet.position);
+        if (label.container) label.container.position.copy(label.targetObject.position);
       }
     });
   }, [cameraPositionRef, orbitLabels]);
@@ -90,7 +91,6 @@ export default function useAnimationLoop(
             body.object.position.y = parentPos.y + Math.sin(body.angle * 0.5) * (body.distance * 0.1);
             body.object.rotation.y += body.speed * 5 * currentTimeScale;
             if (body.orbitContainer) body.orbitContainer.position.copy(parentPos);
-            if (body.spriteContainer) body.spriteContainer.position.copy(parentPos);
           }
           if (celestialBodiesRef?.current && Array.isArray(celestialBodiesRef.current)) {
             if (!celestialBodiesRef.current[index]) celestialBodiesRef.current[index] = {};
